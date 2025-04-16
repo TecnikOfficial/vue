@@ -1,34 +1,56 @@
-name: Deploy to GitHub Pages
+name: Build and Deploy from App.vue
 
 on:
   push:
-    branches:
-      - main  # Change this if your default branch is different
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'  # Specify the Node.js version
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test
-
-      - name: Build the app
-        run: npm run build
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+          node-version: '18'
+          
+      - name: Create necessary files 📝
+        run: |
+          # Create index.html
+          echo '<!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>TecNik Official Site</title>
+            <link rel="stylesheet" href="styles.css">
+          </head>
+          <body>
+            <div id="app"></div>
+            <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+            <script src="app.js"></script>
+          </body>
+          </html>' > index.html
+          
+          # Extract styles from App.vue
+          sed -n '/<style>/,/<\/style>/p' App.vue | sed '1d;$d' > styles.css
+          
+          # Create app.js with template and script from App.vue
+          echo 'const app = Vue.createApp({' > app.js
+          sed -n '/<script>/,/<\/script>/p' App.vue | sed '1d;$d;/export default {/d;/^}/d' >> app.js
+          echo 'template: `' >> app.js
+          sed -n '/<template>/,/<\/template>/p' App.vue | sed '1d;$d' >> app.js
+          echo '`' >> app.js
+          echo '})' >> app.js
+          echo '' >> app.js
+          echo 'app.mount("#app")' >> app.js
+          
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          folder: .
+          branch: gh-pages
