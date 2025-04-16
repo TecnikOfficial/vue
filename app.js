@@ -411,7 +411,14 @@ template: `
 
     <!-- Footer -->
     <footer class="footer">
-      Made with<a href="https://youtu.be/71qssscQqH8?feature=shared" target="_blank"><img src="https://tecnik.pages.dev/assets/media/heart.gif" alt="Heart" title="Listen💓" width="20" height="20" style="vertical-align: bottom;"></a>using A.i | Source Code<a href="https://github.com/TecnikOfficial/TecnikOfficial.github.io" target="_blank"><img src="https://tecnik.pages.dev/assets/media/GITHUB-white.svg" alt="GitHub" title="Github" width="20" height="20" style="vertical-align: bottom;"></a>
+     Made with
+      <a href="https://youtu.be/71qssscQqH8?feature=shared" target="_blank">
+        <img src="https://tecnik.pages.dev/assets/media/heart.gif" alt="Heart" title="Listen💓" width="20" height="20">
+      </a>
+      using A.i | Source Code
+      <a href="https://github.com/TecnikOfficial/TecnikOfficial.github.io" target="_blank">
+        <img src="https://tecnik.pages.dev/assets/media/GITHUB-white.svg" alt="GitHub" title="Github" width="20" height="20">
+      </a>
     </footer>
   </div>
 `
