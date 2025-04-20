@@ -1,20 +1,27 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { defineConfig } from "vite"
+import vue from "@vitejs/plugin-vue"
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src')
-    }
-  },
+  // Adjust this to your repository name
+  base: process.env.NODE_ENV === "production" ? "/your-repo-name/" : "/",
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    emptyOutDir: true,
-    sourcemap: false
+    // Optimize build
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    // Generate smaller chunks
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["vue"],
+        },
+      },
+    },
   },
-  base: './' // This ensures assets are loaded correctly on GitHub Pages
 })
