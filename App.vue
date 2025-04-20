@@ -1,14 +1,14 @@
 <template>
   <div>
     <!-- Loading Screen -->
-    <div id="loading-screen" :class="{ unblur: isUnblurred }" v-show="!loadingComplete">
+    <div id="loading-screen" :class="{ 'blur-level': true }" :style="{ 'backdrop-filter': `blur(${blurAmount}px)` }" v-show="!loadingComplete">
       <div class="loading-content">
         <div id="year-timer">{{ currentYear }}</div>
       </div>
     </div>
 
     <div class="video-background">
-      <video autoplay muted loop>
+      <video autoplay muted loop playsinline>
         <source src="https://tecnik.pages.dev/assets/media/video.webm" type="video/webm">
         Your browser does not support the video tag.
       </video>
@@ -82,16 +82,18 @@
         <h2>Freelance Services</h2>
         <div class="table-scroll">
           <table>
-            <tr>
-              <th>Service</th>
-              <th>Description</th>
-              <th>Price Range in (INR)</th>
-            </tr>
-            <tr v-for="(service, index) in services" :key="index">
-              <td>{{ service.name }}</td>
-              <td>{{ service.description }}</td>
-              <td>{{ service.price }}</td>
-            </tr>
+            <tbody>
+              <tr>
+                <th>Service</th>
+                <th>Description</th>
+                <th>Price Range in (INR)</th>
+              </tr>
+              <tr v-for="(service, index) in services" :key="index">
+                <td>{{ service.name }}</td>
+                <td>{{ service.description }}</td>
+                <td>{{ service.price }}</td>
+              </tr>
+            </tbody>
           </table>
         </div>
         <br>
@@ -153,14 +155,16 @@
 
     <!-- Footer -->
     <footer class="footer">
-     Made with
-      <a href="https://youtu.be/71qssscQqH8?feature=shared" target="_blank">
-        <img src="https://tecnik.pages.dev/assets/media/heart.gif" alt="Heart" title="Listen💓" width="20" height="20">
-      </a>
-      using A.i | Source Code
-      <a href="https://github.com/TecnikOfficial/TecnikOfficial.github.io" target="_blank">
-        <img src="https://tecnik.pages.dev/assets/media/GITHUB-white.svg" alt="GitHub" title="Github" width="20" height="20">
-      </a>
+      <div class="footer-content">
+        Made with
+        <a href="https://youtu.be/71qssscQqH8?feature=shared" target="_blank">
+          <img src="https://tecnik.pages.dev/assets/media/heart.gif" alt="Heart" title="Listen💓" width="20" height="20">
+        </a>
+        using A.i | Source Code
+        <a href="https://github.com/TecnikOfficial/TecnikOfficial.github.io" target="_blank">
+          <img src="https://tecnik.pages.dev/assets/media/GITHUB-white.svg" alt="GitHub" title="Github" width="20" height="20">
+        </a>
+      </div>
     </footer>
   </div>
 </template>
@@ -171,9 +175,8 @@ export default {
     return {
       // Loading screen
       currentYear: 1999,
-      isUnblurred: false,
+      blurAmount: 10, // Start with maximum blur
       loadingComplete: false,
-      yearInterval: null,
       
       // Slider text
       sliderText: "WELCOME!",
@@ -237,7 +240,6 @@ export default {
     }, 100);
   },
   beforeUnmount() {
-    clearInterval(this.yearInterval);
     clearInterval(this.textInterval);
     document.removeEventListener('mousedown', this.startDrawing);
     document.removeEventListener('mousemove', this.handleMouseMove);
@@ -254,26 +256,45 @@ export default {
   methods: {
     // Loading screen methods
     startYearTimer() {
-      const updateYear = () => {
-        if (this.currentYear < 2025) {
-          const delay = this.currentYear === 1999 ? 900 : 4000 / (2025 - 1999 + 1);
-          setTimeout(() => {
-            this.currentYear++;
-            updateYear();
-          }, delay);
-        } else {
-          this.fadeOutLoadingScreen();
-        }
-      };
-      
-      updateYear();
+      // Start with 1999 for 750ms (0.75s) with maximum blur
+      setTimeout(() => {
+        // Calculate how quickly to go through the middle years (2000-2024)
+        const middleYears = 2024 - 2000 + 1;
+        const middleYearsDuration = 1500; // 1.5 seconds for all middle years
+        const intervalPerYear = middleYearsDuration / middleYears;
+        
+        const updateMiddleYears = (year) => {
+          if (year <= 2024) {
+            this.currentYear = year;
+            
+            // Calculate blur amount (from 10px at 2000 to 1px at 2024)
+            const progress = (year - 2000) / (2024 - 2000);
+            this.blurAmount = 10 - (progress * 9); // Gradually reduce from 10 to 1
+            
+            // Schedule the next year update
+            setTimeout(() => {
+              updateMiddleYears(year + 1);
+            }, intervalPerYear);
+          } else {
+            // Show 2025 for 750ms (0.75s) with no blur
+            this.currentYear = 2025;
+            this.blurAmount = 0; // No blur at 2025
+            
+            setTimeout(() => {
+              this.fadeOutLoadingScreen();
+            }, 750);
+          }
+        };
+        
+        // Start updating from 2000
+        updateMiddleYears(2000);
+      }, 750); // Show 1999 for 750ms
     },
     fadeOutLoadingScreen() {
-      this.isUnblurred = true;
       setTimeout(() => {
         this.loadingComplete = true;
         this.startTextInterval();
-      }, 1500);
+      }, 500);
     },
     
     // Text slider methods
@@ -372,40 +393,55 @@ export default {
         drawingDot.style.top = `${event.pageY}px`;
         document.body.appendChild(drawingDot);
         
-        // Remove the dot after 5 seconds
+        // Remove the dot after animation completes
         setTimeout(() => {
           drawingDot.style.opacity = 0;
           setTimeout(() => {
-            drawingDot.remove();
+            if (document.body.contains(drawingDot)) {
+              document.body.removeChild(drawingDot);
+            }
           }, 500);
         }, 5000);
       }
     },
     
-    // Heart animation
+    // Heart animation - optimized to reduce performance impact
     createHearts() {
-      for (let i = 0; i < 10; i++) {
-        const heart = document.createElement('div');
-        heart.classList.add('heart');
-        heart.innerText = '❤️';
-        
-        // Set size based on screen width
-        if (window.innerWidth < 768) {
-          heart.style.fontSize = '20px';
-        } else {
-          heart.style.fontSize = '30px';
-        }
-        
-        heart.style.position = 'fixed';
-        heart.style.left = Math.random() * 100 + 'vw';
-        heart.style.top = '0';
-        document.body.appendChild(heart);
-        
-        // Remove heart after animation
-        heart.addEventListener('animationend', () => {
-          heart.remove();
-        });
+      // Create a container for all hearts to improve performance
+      const heartsContainer = document.createElement('div');
+      heartsContainer.className = 'hearts-container';
+      document.body.appendChild(heartsContainer);
+      
+      // Limit the number of hearts based on device performance
+      const heartCount = window.innerWidth < 768 ? 5 : 10;
+      
+      for (let i = 0; i < heartCount; i++) {
+        setTimeout(() => {
+          const heart = document.createElement('div');
+          heart.classList.add('heart');
+          heart.innerText = '❤️';
+          
+          // Set size based on screen width
+          heart.style.fontSize = window.innerWidth < 768 ? '20px' : '30px';
+          heart.style.position = 'fixed';
+          heart.style.left = `${Math.random() * 100}vw`;
+          heart.style.top = '0';
+          
+          heartsContainer.appendChild(heart);
+          
+          // Remove heart after animation completes
+          heart.addEventListener('animationend', () => {
+            heart.remove();
+          });
+        }, i * 100); // Stagger the creation of hearts
       }
+      
+      // Remove the container after all animations complete
+      setTimeout(() => {
+        if (document.body.contains(heartsContainer)) {
+          document.body.removeChild(heartsContainer);
+        }
+      }, 3000);
     },
     
     // Event handlers
@@ -435,10 +471,11 @@ export default {
 }
 
 body, html {
-  height: auto;
+  height: 100%;
   font-family: Arial, sans-serif;
   overflow: hidden;
   cursor: url('https://play.vsthemes.org/t-cursors/12251/25a255ea88403b8c79e2bb1b03efd2a5.webp'), auto; 
+  background-color: #000; /* Ensure black background */
 }
 
 /* Custom cursor for buttons and specific classes */
@@ -466,6 +503,7 @@ a:hover {
   background-color: rgba(0, 255, 0, 0.7);
   box-shadow: 0 0 10px rgba(0, 255, 0, 1), 0 0 20px rgba(0, 255, 0, 0.5);
   transition: opacity 0.5s ease;
+  will-change: opacity;
 }
 
 .video-background {
@@ -500,23 +538,22 @@ video {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 100;
   opacity: 1;
-  transition: opacity 5s ease;
+  transition: backdrop-filter 0.3s ease;
 }
 
 .loading-content {
   color: white;
   font-size: 3rem;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
-.unblur {
-  backdrop-filter: blur(0);
-  transition: backdrop-filter 5s ease;
+.blur-level {
+  transition: backdrop-filter 0.3s ease;
 }
 
 .slider {
@@ -663,10 +700,22 @@ iframe {
   100% { transform: translateY(0); }
 }
 
+.hearts-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  will-change: transform;
+}
+
 .heart {
   position: absolute;
   animation: fall 2s forwards;
   font-size: 30px;
+  will-change: transform, opacity;
 }
 
 @keyframes fall {
@@ -728,19 +777,24 @@ iframe {
   padding: 5px 20px;
   border-radius: 5px;
   width: auto;
-  display: inline-block;
+  display: flex;
+  align-items: center;
   white-space: nowrap;
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
 }
 
 .footer a {
   display: inline-flex;
-  align-items: flex-end;
+  align-items: center;
   margin: 0 3px;
 }
 
 .footer img {
   margin: 0 3px;
-  vertical-align: bottom;
   display: inline-block;
 }
 
