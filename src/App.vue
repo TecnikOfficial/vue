@@ -179,7 +179,7 @@ export default {
       loadingComplete: false,
       
       // Slider text
-      sliderText: "WELCOME!",
+      sliderText: "Welcome Thanks for Visiting!",
       textOptions: [
         "COMPUTER\nENTHUSIAST",
         "GRAPHICS DESIGNER\nVFX",
